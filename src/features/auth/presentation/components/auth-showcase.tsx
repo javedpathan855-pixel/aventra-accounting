@@ -28,6 +28,15 @@ const AuthShowcase = () => {
           </div>
         </Card>
       </div>
+      <div className="w-full flex item-scenter justify-between border-border border-t p-6">
+        <p className="font-montserrat text-sm text-muted italic">
+          All rights reserved © {new Date().getFullYear()} Aventra Accounting
+        </p>
+        <p className="font-montserrat text-sm text-muted italic">
+          Powered by{" "}
+          <span className="font-bold text-primary">NextGen Services</span>
+        </p>
+      </div>
     </div>
   );
 };
