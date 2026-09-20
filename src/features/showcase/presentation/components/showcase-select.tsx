@@ -1,6 +1,7 @@
 "use client";
 
 import Card from "@/shared/components/ui/card";
+import CheckBox from "@/shared/components/ui/checkbox";
 import Combobox from "@/shared/components/ui/combobox";
 import Select from "@/shared/components/ui/select";
 
@@ -53,6 +54,7 @@ const ShowcaseSelect = () => {
           console.log(value);
         }}
       />
+      <CheckBox />
     </Card>
   );
 };

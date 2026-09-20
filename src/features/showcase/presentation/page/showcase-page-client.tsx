@@ -10,6 +10,7 @@ const ShowcasePageClient = () => {
       <ShowcaseButtons />
       <ShowcaseInput />
       <ShowcaseSelect />
+      
     </div>
   );
 };
