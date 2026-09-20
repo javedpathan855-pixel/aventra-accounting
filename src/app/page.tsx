@@ -1,9 +1,7 @@
+import { redirect } from "next/navigation";
+
 const RootPage = () => {
-  return (
-    <div>
-      <h1 className="font-lato">Root Page</h1>
-    </div>
-  );
+  redirect("/auth");
 };
 
 export default RootPage;
