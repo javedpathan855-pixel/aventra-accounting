@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import {
   Lato,
-  Momo_Signature,
   Montserrat,
   Playwrite_AU_SA,
+  Shadows_Into_Light,
 } from "next/font/google";
 import { ReactNode } from "react";
 import "./globals.css";
+import ThemeProvider from "@/shared/providers/theme-provider";
 
 const lato = Lato({
   subsets: ["latin"],
@@ -25,6 +26,12 @@ const signature = Playwrite_AU_SA({
   variable: "--font-signature",
 });
 
+const shadow = Shadows_Into_Light({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-shadow",
+});
+
 export const metadata: Metadata = {
   title: "Aventra | Accounting",
   description:
@@ -33,12 +40,12 @@ export const metadata: Metadata = {
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${lato.variable} ${montserrat.variable} ${signature.variable}`}
+        className={`${lato.variable} ${montserrat.variable} ${signature.variable} ${shadow.variable}`}
         suppressHydrationWarning
       >
-        {children}
+        <ThemeProvider> {children}</ThemeProvider>
       </body>
     </html>
   );

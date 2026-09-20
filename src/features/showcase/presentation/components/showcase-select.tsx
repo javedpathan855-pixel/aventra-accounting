@@ -7,7 +7,7 @@ import Select from "@/shared/components/ui/select";
 
 const ShowcaseSelect = () => {
   return (
-    <Card className="grid grid-cols-4 gap-4">
+    <Card className="grid grid-cols-4 gap-4 items-center justify-center">
       <Select
         required
         label="Country"
@@ -54,7 +54,10 @@ const ShowcaseSelect = () => {
           console.log(value);
         }}
       />
-      <CheckBox />
+      <div className="flex items-center gap-2 h-full">
+        <CheckBox />₹
+        <span>Terms & Conditions</span>
+      </div>
     </Card>
   );
 };

@@ -64,7 +64,7 @@ const Checkbox = ({
 
       <span
         aria-hidden="true"
-        className={cn("relative shrink-0", "h-6 w-6", checkboxClassName)}
+        className={cn("relative shrink-0", "h-5 w-5", checkboxClassName)}
       >
         <span
           className={cn(
@@ -103,7 +103,7 @@ const Checkbox = ({
           <span
             className={cn(
               "absolute left-0 top-1/2",
-              "z-[1]",
+              "z-1",
               "h-0 w-0",
               "bg-primary",
 
@@ -123,7 +123,7 @@ const Checkbox = ({
           <span
             className={cn(
               "absolute right-0 top-1/2",
-              "z-[1]",
+              "z-1",
               "h-0 w-0",
               "bg-primary",
 
@@ -141,11 +141,7 @@ const Checkbox = ({
           />
         </span>
 
-        {/* ===================================================
-            SVG TICK
-            =================================================== */}
-
-        <span className={cn("pointer-events-none absolute inset-0", "z-[2]")}>
+        <span className={cn("pointer-events-none absolute inset-0", "z-2")}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 52 52"
@@ -156,7 +152,7 @@ const Checkbox = ({
               fill="none"
               className={cn(
                 "stroke-primary-foreground",
-                "[stroke-width:5]",
+                "stroke-5",
                 "[stroke-linecap:round]",
                 "[stroke-linejoin:round]",
               )}
