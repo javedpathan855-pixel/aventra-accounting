@@ -21,13 +21,13 @@ const Divider = ({
     >
       {text ? (
         <>
-          <div className="flex-grow border-t border-border" />
+          <div className="grow border-t border-border" />
           <span
             className={cn("px-4 text-sm font-medium text-muted", textClassName)}
           >
             {text}
           </span>
-          <div className="flex-grow border-t border-border" />
+          <div className="grow border-t border-border" />
         </>
       ) : (
         <div className="w-full flex-1 border-t border-border" />
