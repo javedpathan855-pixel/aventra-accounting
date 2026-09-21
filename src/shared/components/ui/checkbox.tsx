@@ -55,8 +55,7 @@ const Checkbox = ({
         {...props}
         id={checkboxId}
         type="checkbox"
-        checked={checked}
-        defaultChecked={defaultChecked}
+        {...(isControlled ? { checked } : { defaultChecked })}
         disabled={disabled}
         onChange={handleChange}
         className={cn("peer sr-only", className)}
@@ -69,16 +68,14 @@ const Checkbox = ({
         <span
           className={cn(
             "absolute inset-0",
-            "rounded-[4px]",
+            "rounded-sm",
             "border-[3px] border-border-strong",
             "bg-background",
 
-            // Original hover transition
-            "transition-all duration-1000 ease-out",
+            "transition-colors duration-200 ease-out",
 
             // Hover
             "group-hover:border-primary",
-            "group-hover:border-4",
 
             // Focus
             "peer-focus-visible:ring-2",
@@ -89,57 +86,54 @@ const Checkbox = ({
             // Disabled
             "peer-disabled:pointer-events-none",
             "peer-disabled:group-hover:border-border-strong",
-            "peer-disabled:group-hover:border-[3px]",
           )}
         />
 
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-0",
-            "overflow-hidden",
-            "rounded-[4px]",
-          )}
-        >
           <span
             className={cn(
-              "absolute left-0 top-1/2",
-              "z-1",
-              "h-0 w-0",
-              "bg-primary",
-
-              // Original Uiverse animation
-              "transition-all duration-500 ease-out",
-
-              isChecked && [
-                "top-0",
-                "h-full",
-                "w-1/2",
-                "rounded-l-[4px]",
-                "rounded-r-none",
-              ],
+              "pointer-events-none absolute inset-0",
+              "overflow-hidden",
+              "rounded-sm",
             )}
-          />
+          >
+            <span
+              className={cn(
+                "absolute left-0 top-1/2",
+                "z-1",
+                "h-0 w-0",
+                "bg-primary",
 
-          <span
-            className={cn(
-              "absolute right-0 top-1/2",
-              "z-1",
-              "h-0 w-0",
-              "bg-primary",
+                "transition-[top,height,width] duration-200 ease-out",
 
-              // Original Uiverse animation
-              "transition-all duration-500 ease-out",
+                isChecked && [
+                  "top-0",
+                  "h-full",
+                  "w-1/2",
+                  "rounded-l-sm",
+                  "rounded-r-none",
+                ],
+              )}
+            />
 
-              isChecked && [
-                "top-0",
-                "h-full",
-                "w-1/2",
-                "rounded-r-[4px]",
-                "rounded-l-none",
-              ],
-            )}
-          />
-        </span>
+            <span
+              className={cn(
+                "absolute right-0 top-1/2",
+                "z-1",
+                "h-0 w-0",
+                "bg-primary",
+
+                "transition-[top,height,width] duration-200 ease-out",
+
+                isChecked && [
+                  "top-0",
+                  "h-full",
+                  "w-1/2",
+                  "rounded-r-sm",
+                  "rounded-l-none",
+                ],
+              )}
+            />
+          </span>
 
         <span className={cn("pointer-events-none absolute inset-0", "z-2")}>
           <svg
@@ -159,8 +153,8 @@ const Checkbox = ({
               style={{
                 strokeDasharray: 36,
                 strokeDashoffset: isChecked ? 0 : 36,
-                transition: "stroke-dashoffset 0.6s ease-out",
-                transitionDelay: isChecked ? "0.6s" : "0s",
+                transition: "stroke-dashoffset 0.2s ease-out",
+                transitionDelay: isChecked ? "0.15s" : "0s",
               }}
             />
           </svg>

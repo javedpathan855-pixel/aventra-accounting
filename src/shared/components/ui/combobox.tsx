@@ -67,9 +67,17 @@ const Combobox = ({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const [selectedValue, setSelectedValue] = useState(
+  const [internalValue, setInternalValue] = useState(
     defaultValue ?? value ?? "",
   );
+
+  /*
+   * Controlled value wins when provided; otherwise the component
+   * manages its own selection. Derived during render so no
+   * effect is needed to mirror the parent value.
+   */
+  const isControlled = value !== undefined;
+  const selectedValue = isControlled ? value : internalValue;
 
   const [searchValue, setSearchValue] = useState("");
 
@@ -80,15 +88,6 @@ const Combobox = ({
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const isDisabled = disabled || loading;
-
-  /*
-   * Sync controlled value from parent.
-   */
-  useEffect(() => {
-    if (value !== undefined) {
-      setSelectedValue(value);
-    }
-  }, [value]);
 
   /*
    * Close dropdown when clicking outside.
@@ -193,7 +192,7 @@ const Combobox = ({
       return;
     }
 
-    setSelectedValue(optionValue);
+    setInternalValue(optionValue);
     setIsOpen(false);
     setSearchValue("");
     setHighlightedIndex(-1);
@@ -209,7 +208,7 @@ const Combobox = ({
       return;
     }
 
-    setSelectedValue("");
+    setInternalValue("");
     setSearchValue("");
     setHighlightedIndex(-1);
 

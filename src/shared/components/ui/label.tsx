@@ -6,9 +6,15 @@ interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
   className?: string;
 }
 
-const Label = ({ htmlFor, children, className, ...props }: LabelProps) => {
+const Label = ({ children, className, ...props }: LabelProps) => {
   return (
-    <label htmlFor={htmlFor} className={cn()} {...props}>
+    <label
+      {...props}
+      className={cn(
+        "font-montserrat text-sm font-medium text-foreground",
+        className,
+      )}
+    >
       {children}
     </label>
   );
