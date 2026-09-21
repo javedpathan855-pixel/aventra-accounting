@@ -1,4 +1,5 @@
 import ShowcaseButtons from "../components/showcase-buttons";
+import ShowcaseDialog from "../components/showcase-dialog";
 import ShowcaseInput from "../components/showcase-input";
 import ShowcaseSelect from "../components/showcase-select";
 import ShowcaseTrignography from "../components/showcase-trignograpy";
@@ -10,6 +11,7 @@ const ShowcasePageClient = () => {
       <ShowcaseButtons />
       <ShowcaseInput />
       <ShowcaseSelect />
+      <ShowcaseDialog />
     </div>
   );
 };
