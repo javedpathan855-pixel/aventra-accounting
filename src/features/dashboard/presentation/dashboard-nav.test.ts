@@ -15,14 +15,21 @@ describe("dashboard navigation", () => {
     ).toEqual([1, 4, 4, 2]);
   });
 
-  it("exposes exactly one available destination with a real route", () => {
+  it("exposes the available destinations with real routes", () => {
     const available = DASHBOARD_NAV.filter((item) => item.status === "available");
 
-    expect(available.map((item) => item.id)).toEqual(["dashboard"]);
+    expect(available.map((item) => item.id)).toEqual(["dashboard", "organization"]);
     for (const item of available) {
       expect(item.href).toBeTruthy();
       expect(item.href).toMatch(/^\//);
     }
+  });
+
+  it("routes Organization to the business profile page", () => {
+    const organization = DASHBOARD_NAV.find((item) => item.id === "organization");
+
+    expect(organization?.status).toBe("available");
+    expect(organization?.href).toBe("/dashboard/organization");
   });
 
   it("keeps available link destinations unique and internal", () => {

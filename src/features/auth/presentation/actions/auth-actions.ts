@@ -26,7 +26,7 @@ import { verifyOtp } from "@/features/auth/domain/use-cases/verify-otp";
 import { betterAuthProvider } from "@/features/auth/infrastructure/auth/better-auth-provider";
 import { getCurrentUser } from "@/features/auth/infrastructure/auth/session";
 import { getClientIp } from "@/features/auth/infrastructure/auth/request-ip";
-import type { FieldErrors } from "@/features/auth/domain/services/validation";
+import type { FieldErrors } from "@/shared/errors/validation";
 
 interface ActionError {
   code: AuthErrorCode;

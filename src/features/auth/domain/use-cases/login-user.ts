@@ -12,7 +12,7 @@ import { AppError } from "@/shared/errors/app-error";
 
 import { normalizeEmail } from "../services/auth-helpers";
 import { AUTH_LIMITS } from "../services/auth-limits";
-import { parseOrThrow } from "../services/validation";
+import { parseOrThrow } from "@/shared/errors/validation";
 import { LoginSchema } from "../schemas/login.schema";
 import type { AuthProvider, SecurityEventSink } from "../repositories/auth-provider";
 import type { OrganizationRepository } from "../repositories/organization-repository";

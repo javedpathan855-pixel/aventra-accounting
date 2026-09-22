@@ -18,7 +18,7 @@ import { authEmailField } from "../schemas/auth-email";
 import { passwordField } from "../schemas/password.schema";
 import { normalizeEmail } from "../services/auth-helpers";
 import { AUTH_LIMITS } from "../services/auth-limits";
-import { parseOrThrow } from "../services/validation";
+import { parseOrThrow } from "@/shared/errors/validation";
 import type { AuthProvider, SecurityEventSink } from "../repositories/auth-provider";
 
 const RequestResetSchema = z.object({ email: authEmailField });

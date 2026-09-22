@@ -90,6 +90,30 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Business profile (Organization → Business Profile). All nullable:
+  // the organization row is created at registration before any profile
+  // details exist. Logos stay out of the database until asset storage
+  // lands — `logo` only ever holds a served URL, never pasted uploads.
+  businessType     String?
+  industry         String?
+  website          String?
+  tagline          String?
+  contactEmail     String?
+  phone            String?
+  altPhone         String?
+  addressLine1     String?
+  addressLine2     String?
+  city             String?
+  state            String?
+  pinCode          String?
+  country          String?
+  primaryColor     String?
+  secondaryColor   String?
+  brandTagline     String?
+  brandDescription String?
+  fontStyle        String?
+  layoutStyle      String?
+
   members     Member[]
   invitations Invitation[]
 

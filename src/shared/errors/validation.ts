@@ -1,13 +1,13 @@
-// Server-side validation helper (domain layer).
+// Shared server-side validation helper.
 //
-// Every use-case re-validates untrusted input with the canonical ADR-001
-// schemas and converts Zod failures into safe field-error maps for the
+// Every use-case re-validates untrusted input with its canonical Zod
+// schema and converts failures into safe field-error maps for the
 // existing FieldError UI. Throws VALIDATION_ERROR — never returns raw
-// Zod internals to callers.
+// Zod internals to callers. Framework-independent: safe for any domain.
 
 import type { z } from "zod";
 
-import { AppError } from "@/shared/errors/app-error";
+import { AppError } from "./app-error";
 
 type FieldErrors = Record<string, string>;
 

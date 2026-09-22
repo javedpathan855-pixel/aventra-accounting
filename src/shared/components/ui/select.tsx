@@ -289,7 +289,7 @@ const Select = ({
   const describedBy = error ? errorId : helperText ? helperTextId : undefined;
 
   return (
-    <div ref={selectRef} className="relative flex w-full flex-col gap-2">
+    <div ref={selectRef} className="relative flex w-full min-w-0 flex-col gap-2">
       {label && (
         <Label htmlFor={selectId}>
           {label}
@@ -326,13 +326,13 @@ const Select = ({
         }}
         onKeyDown={handleButtonKeyDown}
         className={cn(
-          "flex items-center justify-between font-montserrat",
+          "flex min-w-0 items-center justify-between font-montserrat",
           error
             ? "border-error focus:border-error focus:ring-error/20"
             : "border-border hover:border-primary/50 focus:border-primary focus:ring-primary/20",
         )}
       >
-        <span className={cn(!selectedOption && "text-foreground/60")}>
+        <span className={cn("min-w-0 truncate", !selectedOption && "text-foreground/60")}>
           {loading ? "Loading..." : selectedOption?.label || placeholder}
         </span>
 

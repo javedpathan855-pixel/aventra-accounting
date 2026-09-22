@@ -143,7 +143,7 @@ const DashboardShell = ({
           {/* Main column */}
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-40 border-b border-border bg-background">
-              <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+              <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-2">
                   <button
                     ref={triggerRef}
@@ -189,7 +189,7 @@ const DashboardShell = ({
               </div>
             </header>
             <main className="min-w-0 flex-1">
-              <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+              <div className="w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                 {children}
               </div>
             </main>
