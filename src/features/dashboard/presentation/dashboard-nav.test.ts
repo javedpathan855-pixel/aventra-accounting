@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { DASHBOARD_NAV } from "./dashboard-nav";
+import { DASHBOARD_NAV, DASHBOARD_NAV_SECTIONS } from "./dashboard-nav";
 
 describe("dashboard navigation", () => {
+  it("groups items into the product sections", () => {
+    expect(DASHBOARD_NAV_SECTIONS.map((section) => section.id)).toEqual([
+      "overview",
+      "business",
+      "finance",
+      "organization",
+    ]);
+    expect(
+      DASHBOARD_NAV_SECTIONS.map((section) => section.items.length),
+    ).toEqual([1, 4, 4, 2]);
+  });
+
   it("exposes exactly one available destination with a real route", () => {
     const available = DASHBOARD_NAV.filter((item) => item.status === "available");
 
