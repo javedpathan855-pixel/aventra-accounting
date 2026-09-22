@@ -21,6 +21,18 @@ describe("dashboard navigation", () => {
     expect(available.map((item) => item.id)).toEqual(["dashboard"]);
     for (const item of available) {
       expect(item.href).toBeTruthy();
+      expect(item.href).toMatch(/^\//);
+    }
+  });
+
+  it("keeps available link destinations unique and internal", () => {
+    const hrefs = DASHBOARD_NAV.filter(
+      (item) => item.status === "available",
+    ).map((item) => item.href as string);
+
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+    for (const href of hrefs) {
+      expect(href.startsWith("http")).toBe(false);
     }
   });
 

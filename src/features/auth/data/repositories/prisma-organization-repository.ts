@@ -33,6 +33,23 @@ const prismaOrganizationRepository: OrganizationRepository = {
     return member ? toMembership(member) : null;
   },
 
+  findMembershipsByUserId: async (userId) => {
+    const members = await getPrisma().member.findMany({
+      where: { userId },
+      include: { organization: { select: { name: true, slug: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    return members.map(toMembership);
+  },
+
+  findMembership: async (userId, organizationId) => {
+    const member = await getPrisma().member.findFirst({
+      where: { userId, organizationId },
+      include: { organization: { select: { name: true, slug: true } } },
+    });
+    return member ? toMembership(member) : null;
+  },
+
   slugTaken: async (slug) => {
     const existing = await getPrisma().organization.findUnique({
       where: { slug },

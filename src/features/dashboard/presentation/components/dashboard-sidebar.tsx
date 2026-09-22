@@ -1,29 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type Ref } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   Ellipsis,
   LogOut,
-  Monitor,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Sun,
   X,
   Zap,
 } from "lucide-react";
 
 import { normalTransition } from "@/shared/animation/transitions";
 import { dialogContentVariants } from "@/shared/animation/variants";
-import useTheme from "@/shared/hooks/use-theme";
 import AventraLogo from "@/shared/components/ui/aventra-logo";
-import Button from "@/shared/components/ui/button";
 import Divider from "@/shared/components/ui/divider";
 import StatusBadge from "@/shared/components/ui/status-badge";
 import ThemeSwitcher from "@/shared/components/theme/theme-switcher";
+import { avatarInitial } from "@/shared/utils/avatar";
 import cn from "@/shared/utils/cn";
 
 import SidebarNav from "./sidebar-nav";
@@ -32,6 +29,7 @@ import useLogout from "./use-logout";
 interface SidebarIdentity {
   userName: string;
   userEmail: string;
+  userImage?: string | null;
   organizationName: string;
   organizationRole: string;
 }
@@ -39,48 +37,53 @@ interface SidebarIdentity {
 const COLLAPSED_WIDTH = 80;
 const EXPANDED_WIDTH = 272;
 
-const ThemeCycleButton = () => {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const order = ["light", "dark", "system"] as const;
-  type ThemeName = (typeof order)[number];
-  const current: ThemeName = order.includes(theme as ThemeName)
-    ? (theme as ThemeName)
-    : "system";
-  const next = order[(order.indexOf(current) + 1) % order.length];
-  const effective = current === "system" ? (resolvedTheme ?? "light") : current;
-  const Icon = effective === "dark" ? Moon : effective === "light" ? Sun : Monitor;
+const MENU_ITEM_CLASS = cn(
+  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left",
+  "font-montserrat text-sm font-medium text-foreground",
+  "transition-colors hover:bg-surface-muted",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+  "disabled:cursor-not-allowed disabled:opacity-50",
+);
 
-  return (
-    <button
-      type="button"
-      onClick={() => setTheme(next)}
-      aria-label={`Theme: ${current}. Activate to switch to ${next} mode.`}
-      title={`Theme: ${current} — switch to ${next}`}
-      className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-md text-muted",
-        "transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-      )}
-    >
-      <Icon aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.75} />
-    </button>
-  );
-};
-
+/**
+ * Account menu with native button semantics and menu keyboard support.
+ * Opening moves focus to the first item; ArrowDown/ArrowUp/Home/End move
+ * between items, Escape/Tab closes and restores focus to the trigger,
+ * and outside pointer-down dismisses. Sign-out stays disabled while busy.
+ */
 const ProfileMenu = ({
   userName,
   userEmail,
+  userImage,
   collapsed,
 }: {
   userName: string;
   userEmail: string;
+  userImage?: string | null;
   collapsed: boolean;
 }) => {
   const router = useRouter();
   const { signingOut, signOut } = useLogout();
   const [open, setOpen] = useState(false);
-  const initial = userName.trim().charAt(0).toUpperCase() || "A";
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  const focusMenuItems = () =>
+    Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]:not([disabled])',
+      ) ?? [],
+    );
+
+  // Initial focus moves into the menu on open.
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    focusMenuItems()[0]?.focus();
+  }, [open]);
+
+  // Escape closes and restores focus; outside pointer-down dismisses.
   useEffect(() => {
     if (!open) {
       return;
@@ -88,11 +91,56 @@ const ProfileMenu = ({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target &&
+        !menuRef.current?.contains(target) &&
+        !triggerRef.current?.contains(target)
+      ) {
+        setOpen(false);
       }
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [open ]);
+
+  // Restore focus to the trigger whenever the menu closes.
+  useEffect(() => {
+    if (!open && document.activeElement instanceof HTMLElement) {
+      const inMenu = menuRef.current?.contains(document.activeElement);
+      if (inMenu) {
+        triggerRef.current?.focus();
+      }
+    }
+  }, [open ]);
+
+  const onMenuKeyDown = (event: ReactKeyboardEvent) => {
+    const items = focusMenuItems();
+    const activeIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      items[(activeIndex + 1) % items.length]?.focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(activeIndex - 1 + items.length) % items.length]?.focus();
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      items[0]?.focus();
+    } else if (event.key === "End") {
+      event.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (event.key === "Tab") {
+      setOpen(false);
+    }
+  };
 
   const goRoadmap = () => {
     setOpen(false);
@@ -103,12 +151,14 @@ const ProfileMenu = ({
     const done = await signOut();
     if (done) {
       setOpen(false);
+      triggerRef.current?.focus();
     }
   };
 
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="menu"
@@ -122,12 +172,22 @@ const ProfileMenu = ({
           collapsed && "justify-center px-0",
         )}
       >
-        <span
-          aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-muted font-montserrat text-sm font-bold text-primary"
-        >
-          {initial}
-        </span>
+        {userImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={userImage}
+            alt=""
+            aria-hidden="true"
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-muted font-montserrat text-sm font-bold text-primary"
+          >
+            {avatarInitial(userName)}
+          </span>
+        )}
         {collapsed ? null : (
           <>
             <span className="flex min-w-0 flex-1 flex-col leading-tight">
@@ -142,61 +202,39 @@ const ProfileMenu = ({
       </button>
       <AnimatePresence>
         {open ? (
-          <>
+          <motion.div
+            ref={menuRef}
+            role="menu"
+            aria-label="Account"
+            onKeyDown={onMenuKeyDown}
+            variants={dialogContentVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className={cn(
+              "absolute bottom-full left-0 z-50 mb-2 w-56",
+              "rounded-md border border-border bg-surface-elevated p-1.5 shadow-lg",
+            )}
+          >
+            <p className="truncate px-2.5 pb-1 pt-1.5 font-lato text-xs text-muted">
+              {userEmail}
+            </p>
+            <button type="button" role="menuitem" onClick={goRoadmap} className={MENU_ITEM_CLASS}>
+              <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted" />
+              View roadmap
+            </button>
             <button
               type="button"
-              tabIndex={-1}
-              aria-hidden="true"
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 cursor-default"
-            />
-            <motion.div
-              role="menu"
-              aria-label="Account"
-              variants={dialogContentVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className={cn(
-                "absolute bottom-full left-0 z-50 mb-2 w-56",
-                "rounded-md border border-border bg-surface-elevated p-1.5 shadow-lg",
-              )}
+              role="menuitem"
+              onClick={doSignOut}
+              disabled={signingOut}
+              aria-disabled={signingOut}
+              className={MENU_ITEM_CLASS}
             >
-              <p className="truncate px-2.5 pb-1 pt-1.5 font-lato text-xs text-muted">
-                {userEmail}
-              </p>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={goRoadmap}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left",
-                  "font-montserrat text-sm font-medium text-foreground",
-                  "transition-colors hover:bg-surface-muted",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-                )}
-              >
-                <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted" />
-                View roadmap
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={doSignOut}
-                disabled={signingOut}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left",
-                  "font-montserrat text-sm font-medium text-foreground",
-                  "transition-colors hover:bg-surface-muted",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                )}
-              >
-                <LogOut aria-hidden="true" className="h-4 w-4 text-muted" />
-                {signingOut ? "Signing out…" : "Sign out"}
-              </button>
-            </motion.div>
-          </>
+              <LogOut aria-hidden="true" className="h-4 w-4 text-muted" />
+              {signingOut ? "Signing out…" : "Sign out"}
+            </button>
+          </motion.div>
         ) : null}
       </AnimatePresence>
     </div>
@@ -217,10 +255,10 @@ const SidebarBody = ({
   onNavigate,
   userName,
   userEmail,
+  userImage,
   organizationName,
   organizationRole,
 }: SidebarBodyProps) => {
-  const router = useRouter();
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
@@ -308,22 +346,29 @@ const SidebarBody = ({
             <p className="mt-1 font-lato text-xs leading-relaxed text-muted">
               A complete accounting workspace is on the way.
             </p>
-            <Button
-              variant="link"
-              size="sm"
-              className="mt-1 h-auto justify-start p-0"
-              onClick={() => {
-                router.push("/coming-soon");
-                onNavigate?.();
-              }}
+            <Link
+              href="/coming-soon"
+              onClick={() => onNavigate?.()}
+              className={cn(
+                "mt-1 inline-flex min-h-9 items-center justify-start",
+                "font-montserrat text-sm font-medium text-primary underline underline-offset-2",
+                "hover:text-primary/80",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+                "rounded-md",
+              )}
             >
               View roadmap
-            </Button>
+            </Link>
           </div>
         )}
         <Divider className={collapsed ? "w-10" : undefined} />
-        <ProfileMenu userName={userName} userEmail={userEmail} collapsed={collapsed} />
-        {collapsed ? <ThemeCycleButton /> : <ThemeSwitcher />}
+        <ProfileMenu
+          userName={userName}
+          userEmail={userEmail}
+          userImage={userImage}
+          collapsed={collapsed}
+        />
+        <ThemeSwitcher variant={collapsed ? "compact" : "full"} />
       </div>
     </>
   );
@@ -339,22 +384,37 @@ const DashboardSidebar = (
     variant: "desktop" | "drawer";
     collapsed: boolean;
     pillId: string;
+    panelRef?: Ref<HTMLElement>;
     onNavigate?: () => void;
     onClose?: () => void;
     onToggleCollapse?: () => void;
   },
 ) => {
-  const { variant, collapsed, onNavigate, onClose, onToggleCollapse, pillId, ...identity } = props;
+  const {
+    variant,
+    collapsed,
+    onNavigate,
+    onClose,
+    onToggleCollapse,
+    pillId,
+    panelRef,
+    ...identity
+  } = props;
 
   if (variant === "drawer") {
     return (
       <motion.aside
+        ref={panelRef as Ref<HTMLElement>}
+        id="dashboard-drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Dashboard navigation"
+        tabIndex={-1}
         variants={dialogContentVariants}
         initial="initial"
         animate="animate"
         exit="exit"
-        aria-label="Dashboard navigation"
-        className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-surface lg:hidden"
+        className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-surface focus-visible:outline-none lg:hidden"
       >
         <button
           type="button"

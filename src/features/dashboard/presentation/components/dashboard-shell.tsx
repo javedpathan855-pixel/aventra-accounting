@@ -7,12 +7,15 @@ import { Menu } from "lucide-react";
 import AnimationProvider from "@/shared/animation/motion";
 import { dialogOverlayVariants } from "@/shared/animation/variants";
 import { ToastProvider } from "@/shared/components/ui/toast";
+import { avatarInitial } from "@/shared/utils/avatar";
 
 import DashboardSidebar from "./dashboard-sidebar";
+import { useDrawerFocus } from "./drawer-focus";
 
 interface DashboardShellProps {
   userName: string;
   userEmail: string;
+  userImage?: string | null;
   organizationName: string;
   organizationRole: string;
   children: ReactNode;
@@ -45,6 +48,7 @@ const getCollapsedServerSnapshot = () => false;
 const DashboardShell = ({
   userName,
   userEmail,
+  userImage,
   organizationName,
   organizationRole,
   children,
@@ -57,7 +61,7 @@ const DashboardShell = ({
     getCollapsedServerSnapshot,
   );
   const collapsed = manualCollapsed ?? storedCollapsed;
-  const initial = userName.trim().charAt(0).toUpperCase() || "A";
+  const { panelRef, triggerRef } = useDrawerFocus(drawerOpen);
 
   const toggleCollapse = () => {
     const next = !collapsed;
@@ -88,7 +92,13 @@ const DashboardShell = ({
     };
   }, [drawerOpen]);
 
-  const identity = { userName, userEmail, organizationName, organizationRole };
+  const identity = {
+    userName,
+    userEmail,
+    userImage: userImage ?? null,
+    organizationName,
+    organizationRole,
+  };
 
   return (
     <AnimationProvider>
@@ -121,6 +131,7 @@ const DashboardShell = ({
                   variant="drawer"
                   collapsed={false}
                   pillId="dashboard-nav-active-mobile"
+                  panelRef={panelRef}
                   onNavigate={() => setDrawerOpen(false)}
                   onClose={() => setDrawerOpen(false)}
                   {...identity}
@@ -135,9 +146,12 @@ const DashboardShell = ({
               <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-2">
                   <button
+                    ref={triggerRef}
                     type="button"
                     onClick={() => setDrawerOpen(true)}
                     aria-label="Open navigation"
+                    aria-expanded={drawerOpen}
+                    aria-controls="dashboard-drawer-panel"
                     className="flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 lg:hidden"
                   >
                     <Menu aria-hidden="true" className="h-5 w-5" />
@@ -147,13 +161,22 @@ const DashboardShell = ({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-muted font-montserrat text-sm font-bold text-primary"
-                    title={userEmail}
-                  >
-                    {initial}
-                  </span>
+                  {userImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={userImage}
+                      alt={userName}
+                      className="h-9 w-9 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-muted font-montserrat text-sm font-bold text-primary"
+                      title={userEmail}
+                    >
+                      {avatarInitial(userName)}
+                    </span>
+                  )}
                   <span className="hidden min-w-0 flex-col leading-tight md:flex">
                     <span className="truncate font-montserrat text-sm font-semibold text-foreground">
                       {userName}

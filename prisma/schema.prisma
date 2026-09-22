@@ -112,7 +112,7 @@ model Member {
 }
 
 model Invitation {
-  id             String       @id
+  id             String   @id
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   email          String
@@ -120,10 +120,24 @@ model Invitation {
   status         String       @default("pending")
   expiresAt      DateTime?
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   inviterId      String
   inviter        User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([organizationId])
   @@map("invitation")
+}
+
+// Shared rate-limit ledger (Phase 3). One row per attempt; the composite
+// index makes sliding-window counts cheap and cross-instance safe, unlike
+// the single-process in-memory adapter. Rows are pruned lazily on every
+// check — no background job required.
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@map("rate_limit_hit")
 }

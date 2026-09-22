@@ -81,4 +81,13 @@ describe("auth security policy", () => {
     expect(auth.options.trustedOrigins).toContain("http://localhost:1988");
     expect(auth.options.rateLimit?.enabled).toBe(true);
   });
+
+  it("stores sessions in the shared database, not process memory", () => {
+    // Multi-instance production requires shared session state. The
+    // Prisma adapter persists sessions to PostgreSQL, so any instance
+    // can validate any session.
+    const auth = getAuth();
+
+    expect(auth.options.database).toBeTruthy();
+  });
 });

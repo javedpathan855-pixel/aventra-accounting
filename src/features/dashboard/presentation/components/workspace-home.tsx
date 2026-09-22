@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import Reveal from "@/shared/animation/reveal";
-import Button from "@/shared/components/ui/button";
 import Card from "@/shared/components/ui/card";
 import Divider from "@/shared/components/ui/divider";
 import StatusBadge from "@/shared/components/ui/status-badge";
@@ -37,7 +36,6 @@ interface WorkspaceHomeProps {
  * props from the server guard.
  */
 const WorkspaceHome = ({ userName, organizationName }: WorkspaceHomeProps) => {
-  const router = useRouter();
   const firstName = userName.trim().split(/\s+/)[0] || userName;
 
   return (
@@ -89,12 +87,12 @@ const WorkspaceHome = ({ userName, organizationName }: WorkspaceHomeProps) => {
               <h3 className="font-montserrat text-base font-semibold text-foreground">
                 Recent invoices
               </h3>
-              <Button
-                variant="link"
-                onClick={() => router.push("/coming-soon")}
+              <Link
+                href="/coming-soon"
+                className="inline-flex min-h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-transparent px-4 py-2 font-montserrat text-base font-medium text-primary underline underline-offset-2 transition-all duration-200 ease-out hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 View the roadmap
-              </Button>
+              </Link>
             </div>
             <TableContainer className="border-0">
               <Table className="min-w-[520px]">

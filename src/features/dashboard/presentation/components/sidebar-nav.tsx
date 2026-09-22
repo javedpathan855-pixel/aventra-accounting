@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { fastTransition } from "@/shared/animation/transitions";
@@ -26,25 +27,27 @@ const ITEM_BASE = cn(
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
 );
 
-const NavButton = ({
+const NavLink = ({
   item,
+  href,
   isActive,
   collapsed,
   pillId,
-  onSelect,
+  onNavigate,
 }: {
   item: DashboardNavItem;
+  href: string;
   isActive: boolean;
   collapsed: boolean;
   pillId: string;
-  onSelect: () => void;
+  onNavigate?: () => void;
 }) => {
   const Icon = item.icon;
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <Link
+      href={href}
+      onClick={onNavigate}
       aria-current={isActive ? "page" : undefined}
       aria-label={collapsed ? item.label : undefined}
       title={collapsed ? item.label : undefined}
@@ -93,7 +96,7 @@ const NavButton = ({
           {item.label}
         </span>
       ) : null}
-    </button>
+    </Link>
   );
 };
 
@@ -167,7 +170,6 @@ const SoonButton = ({
  * with hover tooltips. Coming-soon items never navigate — they toast.
  */
 const SidebarNav = ({ collapsed, pillId, onNavigate }: SidebarNavProps) => {
-  const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToasts();
 
@@ -184,16 +186,14 @@ const SidebarNav = ({ collapsed, pillId, onNavigate }: SidebarNavProps) => {
             if (item.status === "available" && item.href) {
               const href = item.href;
               return (
-                <NavButton
+                <NavLink
                   key={item.id}
                   item={item}
+                  href={href}
                   isActive={pathname === href}
                   collapsed={collapsed}
                   pillId={pillId}
-                  onSelect={() => {
-                    router.push(href);
-                    onNavigate?.();
-                  }}
+                  onNavigate={onNavigate}
                 />
               );
             }

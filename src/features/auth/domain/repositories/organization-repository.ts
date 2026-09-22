@@ -22,6 +22,10 @@ interface CreateOwnerOrganizationInput {
 interface OrganizationRepository {
   /** Any membership for the user (the tenant bootstrap check). */
   findMembershipByUserId(userId: string): Promise<OwnerMembership | null>;
+  /** Every membership for the user (tenant-context validation). */
+  findMembershipsByUserId(userId: string): Promise<OwnerMembership[]>;
+  /** Membership of the user in one organization, or null. */
+  findMembership(userId: string, organizationId: string): Promise<OwnerMembership | null>;
   /** True when the slug is already taken by another organization. */
   slugTaken(slug: string): Promise<boolean>;
   /**

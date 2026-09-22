@@ -10,6 +10,10 @@ import { cache } from "react";
 import { AppError } from "@/shared/errors/app-error";
 import { prismaOrganizationRepository } from "@/features/auth/data/repositories/prisma-organization-repository";
 import type { OwnerMembership } from "@/features/auth/domain/repositories/organization-repository";
+import {
+  resolveTenantContext,
+  type TenantContext,
+} from "@/features/auth/domain/services/tenant-context";
 
 import { getAuth } from "./auth";
 
@@ -23,6 +27,12 @@ interface CurrentUser {
 
 interface CurrentSession {
   user: CurrentUser;
+  /**
+   * Session-owned active organization (Better Auth organization plugin).
+   * Null until an organization is activated; only this value — never a
+   * client-supplied ID — may select the tenant.
+   */
+  activeOrganizationId: string | null;
 }
 
 const toCurrentUser = (user: {
@@ -45,7 +55,12 @@ const getCurrentSession = async (): Promise<CurrentSession | null> => {
   if (!session?.user) {
     return null;
   }
-  return { user: toCurrentUser(session.user) };
+  const rawActive = (session.session as { activeOrganizationId?: unknown } | null | undefined)
+    ?.activeOrganizationId;
+  return {
+    user: toCurrentUser(session.user),
+    activeOrganizationId: typeof rawActive === "string" ? rawActive : null,
+  };
 };
 
 /** Current user, or null. Never trust client-provided identity. */
@@ -80,18 +95,39 @@ interface MembershipContext {
 }
 
 /**
+ * Require a validated tenant context derived from the verified session —
+ * never from client-supplied organizationId (TENANCY rules). Membership
+ * is validated server-side; foreign or missing tenants throw 403.
+ */
+const requireTenantContext = async (): Promise<
+  MembershipContext & { tenant: TenantContext }
+> => {
+  const current = await getCurrentSession();
+  if (!current) {
+    throw new AppError("INVALID_CREDENTIALS", {
+      message: "Please sign in to continue.",
+    });
+  }
+  if (!current.user.emailVerified) {
+    throw new AppError("EMAIL_NOT_VERIFIED");
+  }
+  const memberships =
+    await prismaOrganizationRepository.findMembershipsByUserId(current.user.id);
+  const tenant = resolveTenantContext({
+    userId: current.user.id,
+    memberships,
+    activeOrganizationId: current.activeOrganizationId,
+  });
+  return { user: current.user, membership: tenant.membership, tenant };
+};
+
+/**
  * Require organization membership derived from the session — never
  * from client-supplied organizationId (TENANCY rules). Throws 403
  * when the user belongs to no organization.
  */
 const requireOrganizationMembership = async (): Promise<MembershipContext> => {
-  const user = await requireVerifiedEmail();
-  const membership = await prismaOrganizationRepository.findMembershipByUserId(user.id);
-  if (!membership) {
-    throw new AppError("FORBIDDEN", {
-      message: "No organization is linked to this account yet.",
-    });
-  }
+  const { user, membership } = await requireTenantContext();
   return { user, membership };
 };
 
@@ -110,6 +146,7 @@ export {
   getMembershipContext,
   requireAuth,
   requireOrganizationMembership,
+  requireTenantContext,
   requireVerifiedEmail,
 };
 export type { CurrentSession, CurrentUser, MembershipContext };

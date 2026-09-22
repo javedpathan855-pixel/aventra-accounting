@@ -21,6 +21,8 @@ describe("ensureOwnerOrganization", () => {
   it("returns the existing membership without writing on repeats", async () => {
     const repository: OrganizationRepository = {
       findMembershipByUserId: vi.fn(async () => existingMembership),
+      findMembershipsByUserId: vi.fn(async () => [existingMembership]),
+      findMembership: vi.fn(async () => existingMembership),
       slugTaken: vi.fn(async () => false),
       createOrganizationWithOwner: vi.fn(),
     };
@@ -38,6 +40,8 @@ describe("ensureOwnerOrganization", () => {
   it("creates organization plus owner membership exactly once", async () => {
     const repository: OrganizationRepository = {
       findMembershipByUserId: vi.fn(async () => null),
+      findMembershipsByUserId: vi.fn(async () => []),
+      findMembership: vi.fn(async () => null),
       slugTaken: vi.fn(async () => false),
       createOrganizationWithOwner: vi.fn(async (input) => ({
         organizationId: input.organizationId,
@@ -62,6 +66,8 @@ describe("ensureOwnerOrganization", () => {
   it("retries with a fresh slug when the candidate is taken", async () => {
     const repository: OrganizationRepository = {
       findMembershipByUserId: vi.fn(async () => null),
+      findMembershipsByUserId: vi.fn(async () => []),
+      findMembership: vi.fn(async () => null),
       slugTaken: vi.fn(async () => false),
       createOrganizationWithOwner: vi.fn(async (input) => ({
         organizationId: input.organizationId,
@@ -89,6 +95,8 @@ describe("ensureOwnerOrganization", () => {
   it("rejects an empty organization name without touching storage", async () => {
     const repository: OrganizationRepository = {
       findMembershipByUserId: vi.fn(async () => null),
+      findMembershipsByUserId: vi.fn(async () => []),
+      findMembership: vi.fn(async () => null),
       slugTaken: vi.fn(),
       createOrganizationWithOwner: vi.fn(),
     };
@@ -102,6 +110,8 @@ describe("ensureOwnerOrganization", () => {
   it("surfaces a conflict when every slug attempt races", async () => {
     const repository: OrganizationRepository = {
       findMembershipByUserId: vi.fn(async () => null),
+      findMembershipsByUserId: vi.fn(async () => []),
+      findMembership: vi.fn(async () => null),
       slugTaken: vi.fn(async () => false),
       createOrganizationWithOwner: vi.fn(async () => {
         throw new AppError("CONFLICT");
