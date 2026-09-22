@@ -133,10 +133,12 @@ const Tabs = ({
   }, []);
 
   const orderedTriggers = useCallback(() => {
-    return Array.from(registrations.entries()).map(([triggerValue, registration]) => ({
-      value: triggerValue,
-      ...registration,
-    }));
+    return Array.from(registrations.entries()).map(
+      ([triggerValue, registration]) => ({
+        value: triggerValue,
+        ...registration,
+      }),
+    );
   }, [registrations]);
 
   return (
@@ -164,7 +166,7 @@ interface TabsListProps extends HTMLAttributes<HTMLDivElement> {
 
 const LIST_STYLES: Record<TabsVariant, string> = {
   elevated:
-    "gap-1 overflow-x-auto rounded-lg border border-border bg-surface-muted p-1.5 shadow-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+    "gap-1 overflow-x-auto rounded-lg bg-background p-1.5 shadow-primary-lg dark:shadow-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
   underline:
     "gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
   soft: "gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
@@ -178,10 +180,7 @@ const TabsList = ({
   ...props
 }: TabsListProps) => {
   const { activeValue, select, orderedTriggers } = useTabsContext("TabsList");
-  const variantValue = useMemo(
-    () => ({ variant, align }),
-    [variant, align],
-  );
+  const variantValue = useMemo(() => ({ variant, align }), [variant, align]);
 
   const moveSelection = (direction: 1 | -1) => {
     const enabled = orderedTriggers().filter((item) => !item.disabled);
@@ -253,15 +252,17 @@ const TabsList = ({
   );
 };
 
-interface TabsTriggerProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "type"> {
+interface TabsTriggerProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onClick" | "type"
+> {
   value: string;
   icon?: ReactNode;
   badge?: ReactNode;
 }
 
 const TRIGGER_INDICATOR: Record<TabsVariant, string> = {
-  elevated: "rounded-md border border-border bg-background shadow-sm",
+  elevated: "rounded-md border border-border bg-primary shadow-sm",
   underline: "inset-x-0 top-auto h-[3px] rounded-full bg-primary",
   soft: "rounded-md bg-primary-muted",
 };
@@ -275,13 +276,8 @@ const TabsTrigger = ({
   children,
   ...props
 }: TabsTriggerProps) => {
-  const {
-    activeValue,
-    select,
-    registerTrigger,
-    unregisterTrigger,
-    baseId,
-  } = useTabsContext("TabsTrigger");
+  const { activeValue, select, registerTrigger, unregisterTrigger, baseId } =
+    useTabsContext("TabsTrigger");
   const { variant, align } = useTabsVariant();
   const isActive = activeValue === value;
 
@@ -331,7 +327,7 @@ const TabsTrigger = ({
         isActive ? "font-semibold" : "font-medium",
         variant === "elevated" && [
           "rounded-md px-3.5 py-2",
-          isActive ? "text-foreground" : "text-muted",
+          isActive ? "text-primary-foreground" : "text-muted",
           !disabled && !isActive && "hover:text-foreground",
         ],
         variant === "underline" && [
