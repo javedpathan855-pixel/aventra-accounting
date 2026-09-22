@@ -31,15 +31,7 @@ const ShowcaseShell = () => {
         <header className="sticky top-0 z-40 border-b border-border bg-background shadow-xs print:hidden">
           <div className="mx-auto flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
-              <AventraLogo variant="Short" />
-              <div className="flex min-w-0 flex-col leading-tight">
-                <p className="truncate font-montserrat text-sm font-bold text-foreground">
-                  Aventra
-                </p>
-                <p className="truncate font-lato text-xs text-muted">
-                  Design System
-                </p>
-              </div>
+              <AventraLogo variant="Long" />
             </div>
             <ThemeSwitcher />
           </div>
