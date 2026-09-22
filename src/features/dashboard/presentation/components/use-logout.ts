@@ -1,21 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
-import Button from "@/shared/components/ui/button";
 import { useToasts } from "@/shared/components/ui/toast";
 import { logoutAction } from "@/features/auth/presentation/actions/auth-actions";
 
-const SignOutButton = () => {
+/**
+ * Single logout implementation for every dashboard trigger (sidebar
+ * button, profile menu). Server action invalidates the session;
+ * this hook owns the submitting state, toast, and redirect only.
+ */
+const useLogout = () => {
   const router = useRouter();
   const { toast } = useToasts();
   const [signingOut, setSigningOut] = useState(false);
+  const busyRef = useRef(false);
 
-  const handleSignOut = async () => {
-    if (signingOut) {
-      return;
+  const signOut = useCallback(async (): Promise<boolean> => {
+    if (busyRef.current) {
+      return false;
     }
+    busyRef.current = true;
     setSigningOut(true);
     try {
       const result = await logoutAction();
@@ -23,21 +29,20 @@ const SignOutButton = () => {
         toast({ title: "Signed out successfully", tone: "success" });
         router.push(result.data.redirectTo);
         router.refresh();
-      } else {
-        toast({ title: result.error.message, tone: "error" });
+        return true;
       }
+      toast({ title: result.error.message, tone: "error" });
+      return false;
     } catch {
       toast({ title: "Something went wrong. Please try again.", tone: "error" });
+      return false;
     } finally {
+      busyRef.current = false;
       setSigningOut(false);
     }
-  };
+  }, [router, toast]);
 
-  return (
-    <Button variant="outline" onClick={handleSignOut} disabled={signingOut}>
-      {signingOut ? "Signing out…" : "Sign out"}
-    </Button>
-  );
+  return { signingOut, signOut };
 };
 
-export { SignOutButton };
+export default useLogout;

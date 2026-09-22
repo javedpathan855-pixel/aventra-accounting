@@ -1,25 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import AnimationProvider from "@/shared/animation/motion";
-import { fastTransition } from "@/shared/animation/transitions";
-import {
-  dialogContentVariants,
-  dialogOverlayVariants,
-} from "@/shared/animation/variants";
-import AventraLogo from "@/shared/components/ui/aventra-logo";
-import Divider from "@/shared/components/ui/divider";
-import StatusBadge from "@/shared/components/ui/status-badge";
-import ThemeSwitcher from "@/shared/components/theme/theme-switcher";
-import { ToastProvider, useToasts } from "@/shared/components/ui/toast";
-import cn from "@/shared/utils/cn";
-import { SignOutButton } from "@/app/dashboard/_components/sign-out-button";
+import { dialogOverlayVariants } from "@/shared/animation/variants";
+import { ToastProvider } from "@/shared/components/ui/toast";
 
-import { DASHBOARD_NAV } from "../dashboard-nav";
+import DashboardSidebar from "./dashboard-sidebar";
 
 interface DashboardShellProps {
   userName: string;
@@ -29,82 +18,29 @@ interface DashboardShellProps {
   children: ReactNode;
 }
 
-const NavList = ({
-  pillId,
-  onNavigate,
-}: {
-  pillId: string;
-  onNavigate?: () => void;
-}) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { toast } = useToasts();
+const COLLAPSE_STORAGE_KEY = "aventra-sidebar-collapsed";
 
-  return (
-    <nav aria-label="Dashboard" className="flex flex-col gap-1">
-      {DASHBOARD_NAV.map((item) => {
-        const Icon = item.icon;
-        if (item.status === "available" && item.href) {
-          const isActive = pathname === item.href;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                router.push(item.href as string);
-                onNavigate?.();
-              }}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "relative flex items-center gap-3 rounded-md px-3 py-2 text-left",
-                "font-montserrat text-sm font-medium",
-                "transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-                isActive
-                  ? "font-semibold text-primary"
-                  : "text-muted hover:bg-surface-muted hover:text-foreground",
-              )}
-            >
-              {isActive ? (
-                <motion.span
-                  layoutId={pillId}
-                  transition={fastTransition}
-                  aria-hidden="true"
-                  className="absolute inset-0 rounded-md bg-primary-muted"
-                />
-              ) : null}
-              <Icon aria-hidden="true" className="relative h-4 w-4 shrink-0" strokeWidth={1.75} />
-              <span className="relative">{item.label}</span>
-            </button>
-          );
-        }
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => {
-              toast({ title: item.notice ?? `${item.label} is coming soon.`, tone: "info" });
-              onNavigate?.();
-            }}
-            aria-label={`${item.label}, coming soon`}
-            className={cn(
-              "relative flex items-center gap-3 rounded-md px-3 py-2 text-left",
-              "font-montserrat text-sm font-medium text-muted",
-              "transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
-            )}
-          >
-            <Icon aria-hidden="true" className="relative h-4 w-4 shrink-0" strokeWidth={1.75} />
-            <span className="relative">{item.label}</span>
-            <StatusBadge tone="neutral" className="relative ml-auto px-2 py-0.5 text-[11px]">
-              Soon
-            </StatusBadge>
-          </button>
-        );
-      })}
-    </nav>
-  );
+const readCollapsed = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    return window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
 };
+
+/*
+ * Collapse preference survives reloads via localStorage. The external
+ * store mirrors the mounted-guard pattern used by ThemeSwitcher: the
+ * server snapshot is always expanded (matching SSR markup), and the
+ * client snapshot is read after hydration — no mismatch, no effect
+ * cascading, toggle always wins through the manual override.
+ */
+const subscribeToCollapse = () => () => {};
+const getCollapsedSnapshot = () => readCollapsed();
+const getCollapsedServerSnapshot = () => false;
 
 const DashboardShell = ({
   userName,
@@ -113,45 +49,58 @@ const DashboardShell = ({
   organizationRole,
   children,
 }: DashboardShellProps) => {
+  const [manualCollapsed, setManualCollapsed] = useState<boolean | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const storedCollapsed = useSyncExternalStore(
+    subscribeToCollapse,
+    getCollapsedSnapshot,
+    getCollapsedServerSnapshot,
+  );
+  const collapsed = manualCollapsed ?? storedCollapsed;
   const initial = userName.trim().charAt(0).toUpperCase() || "A";
+
+  const toggleCollapse = () => {
+    const next = !collapsed;
+    try {
+      window.localStorage.setItem(COLLAPSE_STORAGE_KEY, next ? "1" : "0");
+    } catch {
+      // Persistence is a nicety; the toggle itself must always work.
+    }
+    setManualCollapsed(next);
+  };
+
+  // Drawer ergonomics: Escape closes, background stays put while open.
+  useEffect(() => {
+    if (!drawerOpen) {
+      return;
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawerOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [drawerOpen]);
+
+  const identity = { userName, userEmail, organizationName, organizationRole };
 
   return (
     <AnimationProvider>
       <ToastProvider>
         <div className="flex min-h-dvh w-full bg-background text-foreground">
-          {/* Desktop sidebar */}
-          <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
-            <div className="flex items-center gap-2 px-5 pb-2 pt-5">
-              <AventraLogo variant="Short" />
-              <div className="flex min-w-0 flex-col leading-tight">
-                <p className="truncate font-montserrat text-base font-bold text-foreground">
-                  Aventra
-                </p>
-                <p className="font-lato text-xs text-muted">Accounting</p>
-              </div>
-            </div>
-            <div className="px-5 py-3">
-              <div className="flex items-center justify-between gap-2 rounded-md border border-border-subtle bg-background px-3 py-2">
-                <p className="truncate font-montserrat text-sm font-semibold text-foreground">
-                  {organizationName}
-                </p>
-                <StatusBadge tone="success" className="shrink-0 px-2 py-0.5 text-[11px]">
-                  {organizationRole}
-                </StatusBadge>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-              <NavList pillId="dashboard-nav-active-desktop" />
-            </div>
-            <div className="flex flex-col gap-3 px-5 pb-5">
-              <Divider />
-              <p className="truncate font-lato text-xs text-muted" title={userEmail}>
-                {userEmail}
-              </p>
-              <SignOutButton />
-            </div>
-          </aside>
+          <DashboardSidebar
+            variant="desktop"
+            collapsed={collapsed}
+            onToggleCollapse={toggleCollapse}
+            pillId="dashboard-nav-active-desktop"
+            {...identity}
+          />
 
           {/* Mobile drawer */}
           <AnimatePresence>
@@ -167,42 +116,15 @@ const DashboardShell = ({
                   onClick={() => setDrawerOpen(false)}
                   className="fixed inset-0 z-50 bg-overlay lg:hidden"
                 />
-                <motion.aside
+                <DashboardSidebar
                   key="dashboard-drawer-panel"
-                  variants={dialogContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  aria-label="Dashboard navigation"
-                  className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-surface lg:hidden"
-                >
-                  <div className="flex items-center justify-between gap-2 px-5 pb-2 pt-5">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <AventraLogo variant="Short" />
-                      <p className="truncate font-montserrat text-base font-bold text-foreground">
-                        {organizationName}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDrawerOpen(false)}
-                      aria-label="Close navigation"
-                      className="flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                    >
-                      <X aria-hidden="true" className="h-5 w-5" />
-                    </button>
-                  </div>
-                  <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-                    <NavList
-                      pillId="dashboard-nav-active-mobile"
-                      onNavigate={() => setDrawerOpen(false)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3 px-5 pb-5">
-                    <Divider />
-                    <SignOutButton />
-                  </div>
-                </motion.aside>
+                  variant="drawer"
+                  collapsed={false}
+                  pillId="dashboard-nav-active-mobile"
+                  onNavigate={() => setDrawerOpen(false)}
+                  onClose={() => setDrawerOpen(false)}
+                  {...identity}
+                />
               </>
             ) : null}
           </AnimatePresence>
@@ -224,8 +146,7 @@ const DashboardShell = ({
                     {organizationName}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                  <ThemeSwitcher />
+                <div className="flex shrink-0 items-center gap-3">
                   <span
                     aria-hidden="true"
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-muted font-montserrat text-sm font-bold text-primary"
