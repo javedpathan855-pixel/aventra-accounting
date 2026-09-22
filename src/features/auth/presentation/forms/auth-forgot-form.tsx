@@ -6,8 +6,10 @@ import FieldError from "@/shared/components/ui/field-error";
 import Input from "@/shared/components/ui/input";
 import Label from "@/shared/components/ui/label";
 import Button from "@/shared/components/ui/button";
+import { useToasts } from "@/shared/components/ui/toast";
 import { getFieldErrorId } from "@/shared/utils/form-ids";
 import AuthBackButton from "../components/auth-back-button";
+import { forgotPasswordAction } from "../actions/auth-actions";
 
 import { ForgotPasswordSchema } from "../../domain/schemas/forgot-password.schema";
 
@@ -22,6 +24,9 @@ interface ForgotPasswordFieldErrors {
 const AuthForgotForm = ({ onBackToLogin }: AuthForgotFormProps) => {
   const [fieldErrors, setFieldErrors] =
     useState<ForgotPasswordFieldErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToasts();
 
   const clearFieldError = (field: keyof ForgotPasswordFieldErrors) => {
     setFieldErrors((previous) =>
@@ -29,13 +34,17 @@ const AuthForgotForm = ({ onBackToLogin }: AuthForgotFormProps) => {
     );
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) {
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
-    const result = ForgotPasswordSchema.safeParse({
+    const payload = {
       email: formData.get("email"),
-    });
+    };
+    const result = ForgotPasswordSchema.safeParse(payload);
 
     if (!result.success) {
       const flatErrors = result.error.flatten().fieldErrors;
@@ -46,6 +55,30 @@ const AuthForgotForm = ({ onBackToLogin }: AuthForgotFormProps) => {
     }
 
     setFieldErrors({});
+    setSubmitting(true);
+    try {
+      const response = await forgotPasswordAction(payload);
+      if (!response.success) {
+        if (response.fieldErrors) {
+          setFieldErrors({ email: response.fieldErrors.email });
+          return;
+        }
+        toast({ title: response.error.message, tone: "error" });
+        return;
+      }
+      // Generic by design: identical outcome whether or not the address
+      // has an account, so requests cannot enumerate users.
+      setSent(true);
+      toast({
+        title: "Check your inbox",
+        description: "If an account exists for this email, a reset link is on its way.",
+        tone: "success",
+      });
+    } catch {
+      toast({ title: "Something went wrong. Please try again.", tone: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -87,7 +120,9 @@ const AuthForgotForm = ({ onBackToLogin }: AuthForgotFormProps) => {
                 message={fieldErrors.email}
               />
             </div>
-            <Button type="submit">Send Reset Link</Button>
+            <Button type="submit" disabled={submitting || sent}>
+              {submitting ? "Sending…" : sent ? "Reset link sent" : "Send Reset Link"}
+            </Button>
           </form>
         </Card>
       </div>

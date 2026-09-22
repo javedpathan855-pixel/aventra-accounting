@@ -27,7 +27,7 @@ const ShowcaseShell = () => {
 
   return (
     <AnimationProvider>
-      <div className="min-h-dvh bg-background">
+      <div className="min-h-dvh bg-background print:m-0 print:block print:min-h-0 print:bg-white print:p-0">
         <header className="sticky top-0 z-40 border-b border-border bg-background shadow-xs print:hidden">
           <div className="mx-auto flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
@@ -63,7 +63,7 @@ const ShowcaseShell = () => {
           </nav>
         </header>
 
-        <div className="mx-auto flex w-full items-start gap-8 px-4 py-8 sm:px-6 lg:px-8 print:block print:p-0">
+        <div className="mx-auto flex w-full items-start gap-8 px-4 py-8 sm:px-6 lg:px-8 print:m-0 print:block print:w-[210mm] print:gap-0 print:p-0">
           <aside className="sticky top-24 hidden h-fit max-h-[calc(100dvh-7rem)] w-60 shrink-0 overflow-y-auto lg:block print:hidden">
             <nav aria-label="Showcase sections" className="flex flex-col gap-5">
               {SHOWCASE_NAV.map((group) => (
@@ -106,7 +106,7 @@ const ShowcaseShell = () => {
             </nav>
           </aside>
 
-          <main className="min-w-0 flex-1 pb-16 print:pb-0">
+          <main className="min-w-0 flex-1 pb-16 print:m-0 print:block print:w-[210mm] print:p-0 print:pb-0">
             <AnimatePresence mode="wait" initial={false}>
               {ActiveComponent ? (
                 <motion.div
@@ -115,6 +115,7 @@ const ShowcaseShell = () => {
                   initial="initial"
                   animate="animate"
                   exit="exit"
+                  className="print:m-0 print:transform-none print:p-0"
                 >
                   <ActiveComponent
                     onNavigate={(sectionId: string) => navigate(sectionId)}

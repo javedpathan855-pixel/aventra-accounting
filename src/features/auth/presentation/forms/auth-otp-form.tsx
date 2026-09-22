@@ -12,37 +12,55 @@ import Button from "@/shared/components/ui/button";
 import Card from "@/shared/components/ui/card";
 import FieldError from "@/shared/components/ui/field-error";
 import Input from "@/shared/components/ui/input";
+import { useToasts } from "@/shared/components/ui/toast";
 import cn from "@/shared/utils/cn";
 import { getFieldErrorId } from "@/shared/utils/form-ids";
 import AuthBackButton from "../components/auth-back-button";
+import { resendOtpAction, verifyOtpAction } from "../actions/auth-actions";
 
 import { OtpSchema } from "../../domain/schemas/otp.schema";
 
 interface AuthOtpFormProps {
+  email: string;
   length?: number;
-  onComplete?: (otp: string) => void;
+  onVerified: (redirectTo: string) => void;
   onBackToLogin?: () => void;
-  onResend?: () => void;
   disabled?: boolean;
   className?: string;
 }
 
+/** Frontend resend hint only — the server enforces the real cooldown. */
+const RESEND_HINT_SECONDS = 30;
+
 const AuthOtpForm = ({
+  email,
   length = 6,
-  onComplete,
+  onVerified,
   onBackToLogin,
-  onResend,
   disabled = false,
   className,
 }: AuthOtpFormProps) => {
   const [otp, setOtp] = useState<string[]>(Array.from({ length }, () => ""));
   const [otpError, setOtpError] = useState<string | undefined>(undefined);
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendHintLeft, setResendHintLeft] = useState(0);
+  const { toast } = useToasts();
 
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const busy = disabled || verifying;
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  useEffect(() => {
+    if (resendHintLeft <= 0) {
+      return;
+    }
+    const timer = setTimeout(() => setResendHintLeft((left) => left - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendHintLeft]);
 
   const focusInput = (index: number) => {
     if (index < 0 || index >= length) {
@@ -51,6 +69,33 @@ const AuthOtpForm = ({
 
     inputRefs.current[index]?.focus();
     inputRefs.current[index]?.select();
+  };
+
+  const verifyCode = async (code: string) => {
+    if (busy) {
+      return;
+    }
+    const parsed = OtpSchema.safeParse(code);
+    if (!parsed.success) {
+      setOtpError(parsed.error.flatten().formErrors[0] ?? "Enter the 6-digit code");
+      return;
+    }
+
+    setOtpError(undefined);
+    setVerifying(true);
+    try {
+      const response = await verifyOtpAction({ email, otp: code });
+      if (response.success) {
+        toast({ title: "Verification successful", tone: "success" });
+        onVerified(response.data.redirectTo);
+        return;
+      }
+      setOtpError(response.error.message);
+    } catch {
+      setOtpError("Something went wrong. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const updateOtp = (index: number, value: string) => {
@@ -69,7 +114,7 @@ const AuthOtpForm = ({
     const completedOtp = nextOtp.join("");
 
     if (completedOtp.length === length && !nextOtp.includes("")) {
-      onComplete?.(completedOtp);
+      void verifyCode(completedOtp);
     }
   };
 
@@ -143,7 +188,7 @@ const AuthOtpForm = ({
     focusInput(nextFocusIndex);
 
     if (pastedValue.length === length) {
-      onComplete?.(pastedValue);
+      void verifyCode(pastedValue);
     }
   };
 
@@ -158,18 +203,32 @@ const AuthOtpForm = ({
       return;
     }
 
-    setOtpError(undefined);
-
     if (completedOtp.length === length && !otp.includes("")) {
-      onComplete?.(completedOtp);
+      void verifyCode(completedOtp);
     }
   };
 
-  const handleResend = () => {
-    setOtp(Array.from({ length }, () => ""));
-    setOtpError(undefined);
-    focusInput(0);
-    onResend?.();
+  const handleResend = async () => {
+    if (busy || resending || resendHintLeft > 0) {
+      return;
+    }
+    setResending(true);
+    try {
+      const response = await resendOtpAction({ email });
+      if (response.success) {
+        setOtp(Array.from({ length }, () => ""));
+        setOtpError(undefined);
+        focusInput(0);
+        setResendHintLeft(RESEND_HINT_SECONDS);
+        toast({ title: "Verification code sent", tone: "success" });
+        return;
+      }
+      setOtpError(response.error.message);
+    } catch {
+      setOtpError("Something went wrong. Please try again.");
+    } finally {
+      setResending(false);
+    }
   };
 
   const isComplete = otp.join("").length === length && !otp.includes("");
@@ -193,7 +252,7 @@ const AuthOtpForm = ({
               Two-Step Verification
             </h2>
             <p className="font-montserrat text-base text-muted">
-              Enter the {length}-digit code sent to your email
+              Enter the {length}-digit code sent to {email || "your email"}
             </p>
           </div>
           <form
@@ -219,7 +278,7 @@ const AuthOtpForm = ({
                   pattern="[0-9]*"
                   maxLength={1}
                   value={value}
-                  disabled={disabled}
+                  disabled={busy}
                   placeholder=""
                 name={`otp-${index + 1}`}
                 required
@@ -237,7 +296,7 @@ const AuthOtpForm = ({
                   className="h-12 min-w-0 flex-1 max-w-14 text-center text-lg font-semibold sm:h-14"
                 />
               ))}
-          </div>
+            </div>
           <FieldError
             id={getFieldErrorId("otp")}
             message={otpError}
@@ -246,9 +305,9 @@ const AuthOtpForm = ({
           <Button
             type="submit"
             className="mt-2"
-            disabled={disabled || !isComplete}
+            disabled={busy || !isComplete}
           >
-            Verify OTP
+            {verifying ? "Verifying…" : "Verify OTP"}
           </Button>
           </form>
         </Card>
@@ -257,8 +316,16 @@ const AuthOtpForm = ({
         <p className="font-montserrat text-base text-muted">
           Didn&apos;t receive the code?
         </p>
-        <Button variant="link" onClick={handleResend} disabled={disabled}>
-          Resend OTP
+        <Button
+          variant="link"
+          onClick={handleResend}
+          disabled={busy || resending || resendHintLeft > 0}
+        >
+          {resending
+            ? "Sending…"
+            : resendHintLeft > 0
+              ? `Resend OTP (${resendHintLeft}s)`
+              : "Resend OTP"}
         </Button>
       </div>
     </div>

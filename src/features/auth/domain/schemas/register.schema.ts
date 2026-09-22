@@ -1,16 +1,15 @@
 import { z } from "zod";
 
 import { authEmailField } from "./auth-email";
+import { passwordField } from "./password.schema";
 
 /**
  * Canonical input contract for the registration form.
  *
  * Mirrors the actual form fields: name, organization, email, password,
- * confirmPassword, terms. Required + non-empty only.
- *
- * Password policy (minimum length, complexity) is a pending
- * product/security decision — see docs/adr/001-auth-form-validation.md.
- * Do not extend the password rules here without that decision.
+ * confirmPassword, terms. Password policy (ADR 003): minimum 8
+ * characters, decided explicitly — see
+ * docs/adr/003-auth-security-policy.md.
  */
 export const RegisterSchema = z
   .object({
@@ -23,7 +22,7 @@ export const RegisterSchema = z
       .trim()
       .min(1, "Organization is required"),
     email: authEmailField,
-    password: z.string("Password is required").min(1, "Password is required"),
+    password: passwordField(),
     confirmPassword: z
       .string("Please confirm your password")
       .min(1, "Please confirm your password"),
