@@ -58,9 +58,17 @@ const Select = ({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const [selectedValue, setSelectedValue] = useState(
+  const [internalValue, setInternalValue] = useState(
     defaultValue ?? value ?? "",
   );
+
+  /*
+   * Controlled value wins when provided; otherwise the component
+   * manages its own selection. Derived during render so no
+   * effect is needed to mirror the parent value.
+   */
+  const isControlled = value !== undefined;
+  const selectedValue = isControlled ? value : internalValue;
 
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
@@ -68,12 +76,6 @@ const Select = ({
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const isDisabled = disabled || loading;
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setSelectedValue(value);
-    }
-  }, [value]);
 
   useEffect(() => {
     const handleEscape = (event: globalThis.KeyboardEvent) => {
@@ -145,7 +147,7 @@ const Select = ({
       return;
     }
 
-    setSelectedValue(optionValue);
+    setInternalValue(optionValue);
     setIsOpen(false);
 
     setHighlightedIndex(

@@ -1,20 +1,14 @@
-import ShowcaseHeader from "@/features/showcase/presentation/layout/showcase-header";
 import { Metadata } from "next";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Aventra | Showcase",
+  title: "Aventra | Design System",
   description:
-    "Aventra is a professional accounting firm that provides a range of accounting services to businesses and individuals.",
+    "The Aventra Accounting design system — components, foundations, feedback states, and patterns.",
 };
 
 const ShowcaseLayout = ({ children }: { children: ReactNode }) => {
-  return (
-    <div className="flex flex-col gap-6">
-      <ShowcaseHeader />
-      <div className="">{children}</div>
-    </div>
-  );
+  return <div className="min-h-dvh bg-background">{children}</div>;
 };
 
 export default ShowcaseLayout;

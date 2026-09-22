@@ -1,9 +1,9 @@
 import Image from "next/image";
 
-const LOGO_VARIANTS = ["Short", "Long"] as const;
+type LogoVariant = "Short" | "Long";
 
 interface AventraLogoProps {
-  variant?: (typeof LOGO_VARIANTS)[number];
+  variant?: LogoVariant;
 }
 
 const AventraLogo = ({ variant = "Long" }: AventraLogoProps) => {
