@@ -102,3 +102,30 @@ describe("toSuccessEnvelope", () => {
     expect(toSuccessEnvelope({ id: "1" })).toEqual({ success: true, data: { id: "1" } });
   });
 });
+
+describe("safe client errors", () => {
+  it("never serializes stacks, connection strings, or provider internals", () => {
+    const failure = new Error("connect postgresql://user:secret@db:5432/app");
+    (failure as { code?: string }).code = "P1001";
+    const envelope = toErrorEnvelope(failure);
+    const serialized = JSON.stringify(envelope);
+
+    expect(serialized).not.toContain("postgresql://");
+    expect(serialized).not.toContain("secret@db");
+    expect(serialized).not.toContain("at ");
+    expect(envelope.body.error.code).toBe("DATABASE_ERROR");
+    expect(envelope.body.error.message).toBe(
+      "Something went wrong. Please try again in a moment.",
+    );
+  });
+
+  it("keeps Better Auth internals out of the client envelope", () => {
+    const envelope = toErrorEnvelope({
+      body: { code: "FAILED_TO_CREATE_SESSION", message: "session adapter exploded" },
+    });
+    const serialized = JSON.stringify(envelope);
+
+    expect(serialized).not.toContain("adapter");
+    expect(envelope.body.error.code).toBe("INTERNAL_ERROR");
+  });
+});

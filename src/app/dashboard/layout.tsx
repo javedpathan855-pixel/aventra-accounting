@@ -23,6 +23,7 @@ const DashboardLayout = async ({ children }: { children: ReactNode }) => {
     <DashboardShell
       userName={context.user.name}
       userEmail={context.user.email}
+      userImage={context.user.image ?? null}
       organizationName={context.membership.organizationName}
       organizationRole={context.membership.role}
     >

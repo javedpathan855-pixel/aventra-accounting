@@ -10,5 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Playwright E2E lives in ./e2e and runs via `npm run test:e2e`.
+    exclude: ["e2e/**", "node_modules/**"],
   },
 });

@@ -10,7 +10,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
 import { getEmailService } from "@/shared/infrastructure/email/resend-email-service";
-import { getRateLimiter } from "@/shared/infrastructure/rate-limit/rate-limiter";
+import { getProductionRateLimiter } from "@/shared/infrastructure/rate-limit/database-rate-limiter";
 import { logSecurityEvent } from "@/shared/infrastructure/logging/security-logger";
 import { normalizeError, type AuthErrorCode } from "@/shared/errors/app-error";import { prismaOrganizationRepository } from "@/features/auth/data/repositories/prisma-organization-repository";
 import type {
@@ -51,7 +51,9 @@ const baseDeps = async () => ({
   auth: betterAuthProvider,
   orgs: prismaOrganizationRepository,
   notify,
-  limits: getRateLimiter(),
+  // Shared production limiter: in-memory for single-instance dev, the
+  // PostgreSQL ledger when RATE_LIMIT_STORAGE=database (multi-instance).
+  limits: getProductionRateLimiter(),
   events,
   generateId: () => randomUUID(),
   randomSuffix: () => randomBytes(4).toString("hex").slice(0, 6),

@@ -143,6 +143,17 @@ const createFakes = (): Fakes => {
       }
       return null;
     }),
+    findMembershipsByUserId: vi.fn(async (userId: string) => {
+      const membership = state.memberships.get(userId);
+      return membership ? [membership] : [];
+    }),
+    findMembership: vi.fn(async (userId: string, organizationId: string) => {
+      const membership = state.memberships.get(userId);
+      if (membership && membership.organizationId === organizationId) {
+        return membership;
+      }
+      return null;
+    }),
     slugTaken: vi.fn(async (slug: string) => state.slugs.has(slug)),
     createOrganizationWithOwner: vi.fn(async (input) => {
       const { AppError } = await import("@/shared/errors/app-error");

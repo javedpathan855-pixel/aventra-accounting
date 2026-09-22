@@ -5,6 +5,7 @@ import {
 } from "@/features/auth/infrastructure/email/auth-email-templates";
 import { getEnv } from "@/config/env";
 import { AppError } from "@/shared/errors/app-error";
+import { TestEmailService } from "./test-email-service";
 
 import type {
   EmailService,
@@ -61,10 +62,27 @@ class ResendEmailService implements EmailService {
 
 let shared: EmailService | null = null;
 
-/** Server-only singleton behind the EmailService port. */
+/**
+ * Server-only singleton behind the EmailService port. Production always
+ * resolves Resend. When `E2E_TEST_MAIL=stub` (E2E/CI only, never
+ * production), mail is captured by the in-memory test adapter so specs
+ * can complete OTP/reset round-trips deterministically.
+ */
 const getEmailService = (): EmailService => {
-  shared ??= new ResendEmailService();
+  if (shared) {
+    return shared;
+  }
+  if (process.env.E2E_TEST_MAIL === "stub") {
+    shared = new TestEmailService();
+    return shared;
+  }
+  shared = new ResendEmailService();
   return shared;
 };
 
-export { getEmailService, ResendEmailService };
+/** Test seam: drop the cached service between tests. */
+const resetEmailServiceCache = (): void => {
+  shared = null;
+};
+
+export { getEmailService, resetEmailServiceCache, ResendEmailService };

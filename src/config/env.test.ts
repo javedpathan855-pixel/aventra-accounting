@@ -60,4 +60,20 @@ describe("getEnv", () => {
       expect(message).not.toContain("re_test_key");
     }
   });
+
+  it("keeps every secret server-only (no NEXT_PUBLIC_ surface)", () => {
+    resetEnvCache();
+    const env = getEnv(sourceWith({}));
+
+    for (const key of Object.keys(env)) {
+      expect(key.startsWith("NEXT_PUBLIC_")).toBe(false);
+    }
+    expect(Object.keys(env).sort()).toEqual([
+      "BETTER_AUTH_SECRET",
+      "BETTER_AUTH_URL",
+      "DATABASE_URL",
+      "RESEND_API_KEY",
+      "RESEND_FROM_EMAIL",
+    ]);
+  });
 });
