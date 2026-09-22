@@ -22,7 +22,8 @@ const InvoicePage = ({ children, className }: InvoicePageProps) => {
         "relative flex w-[210mm] flex-col overflow-hidden",
         "min-h-[297mm] bg-surface px-[12mm] pb-[6mm] pt-[8mm]",
         "rounded-xl text-left text-foreground shadow-lg",
-        "print:m-0 print:rounded-none print:shadow-none",
+        "print:m-0 print:h-[297mm] print:max-h-[297mm] print:min-h-[297mm] print:w-[210mm]",
+        "print:rounded-none print:border-0 print:shadow-none print:overflow-hidden",
         className,
       )}
     >

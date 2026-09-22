@@ -35,7 +35,7 @@ const InvoiceTemplatesSection = () => {
       description="Production-ready A4 invoice templates designed for Aventra Accounting. Same canonical data, two presentations — rendered, printed, and exported from real markup."
       headerClassName="print:hidden"
     >
-      <Card className="flex flex-col gap-8 p-6 sm:p-8 print:border-0 print:bg-white print:p-0 print:shadow-none">
+      <Card className="flex flex-col gap-8 p-6 sm:p-8 print:m-0 print:gap-0 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
         <div className="flex flex-col gap-3 print:hidden">
           <Subsection>Template</Subsection>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -66,11 +66,11 @@ const InvoiceTemplatesSection = () => {
           </div>
         </div>
         <Divider className="print:hidden" />
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 print:m-0 print:block print:gap-0 print:p-0">
           <Subsection className="print:hidden">Live preview · A4</Subsection>
-          <Preview className="overflow-x-auto bg-surface-muted p-4 sm:p-8 print:border-0 print:bg-white print:p-0 print:shadow-none">
-            <div className="flex">
-              <div className="m-auto shrink-0">
+          <Preview className="overflow-x-auto bg-surface-muted p-4 sm:p-8 print:m-0 print:block print:gap-0 print:overflow-visible print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
+            <div className="flex print:m-0 print:block print:gap-0 print:p-0">
+              <div className="m-auto shrink-0 print:m-0">
                 <InvoiceTemplate template={template} invoice={demoInvoice} />
               </div>
             </div>

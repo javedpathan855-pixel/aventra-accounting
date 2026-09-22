@@ -140,6 +140,31 @@ describe("RegisterSchema", () => {
     }
   });
 
+  it("rejects passwords shorter than 8 characters (ADR 003)", () => {
+    const result = RegisterSchema.safeParse({
+      ...validRegistration,
+      password: "short1",
+      confirmPassword: "short1",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.password).toEqual([
+        "Password must be at least 8 characters",
+      ]);
+    }
+  });
+
+  it("accepts an 8-character password at the policy boundary", () => {
+    const result = RegisterSchema.safeParse({
+      ...validRegistration,
+      password: "abcd1234",
+      confirmPassword: "abcd1234",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects missing terms acceptance", () => {
     const result = RegisterSchema.safeParse({
       ...validRegistration,

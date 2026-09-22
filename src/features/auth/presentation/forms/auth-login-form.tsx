@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Mail } from "lucide-react";
 
 import Button from "@/shared/components/ui/button";
@@ -9,13 +10,16 @@ import FieldError from "@/shared/components/ui/field-error";
 import Input from "@/shared/components/ui/input";
 import Label from "@/shared/components/ui/label";
 import PasswordInput from "@/shared/components/ui/password-input";
+import { useToasts } from "@/shared/components/ui/toast";
 import { getFieldErrorId } from "@/shared/utils/form-ids";
 
+import { loginAction } from "../actions/auth-actions";
 import { LoginSchema } from "../../domain/schemas/login.schema";
 
 interface AuthLoginFormProps {
   onForgotPassword: () => void;
   onRegister: () => void;
+  goToOtp: (email: string) => void;
 }
 
 interface LoginFieldErrors {
@@ -26,8 +30,12 @@ interface LoginFieldErrors {
 const AuthLoginForm = ({
   onForgotPassword,
   onRegister,
+  goToOtp,
 }: AuthLoginFormProps) => {
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToasts();
+  const router = useRouter();
 
   const clearFieldError = (field: keyof LoginFieldErrors) => {
     setFieldErrors((previous) =>
@@ -35,14 +43,18 @@ const AuthLoginForm = ({
     );
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) {
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
-    const result = LoginSchema.safeParse({
+    const payload = {
       email: formData.get("email"),
       password: formData.get("password"),
-    });
+    };
+    const result = LoginSchema.safeParse(payload);
 
     if (!result.success) {
       const flatErrors = result.error.flatten().fieldErrors;
@@ -54,6 +66,34 @@ const AuthLoginForm = ({
     }
 
     setFieldErrors({});
+    setSubmitting(true);
+    try {
+      const response = await loginAction(payload);
+      if (!response.success) {
+        if (response.fieldErrors) {
+          setFieldErrors({
+            email: response.fieldErrors.email,
+            password: response.fieldErrors.password,
+          });
+          return;
+        }
+        toast({ title: response.error.message, tone: "error" });
+        return;
+      }
+      if (response.data.status === "verification-required" && response.data.email) {
+        toast({ title: "Please verify your email", description: "Enter the code we sent to continue.", tone: "warning" });
+        goToOtp(response.data.email);
+        return;
+      }
+      if (response.data.status === "authenticated" && response.data.redirectTo) {
+        router.push(response.data.redirectTo);
+        router.refresh();
+      }
+    } catch {
+      toast({ title: "Something went wrong. Please try again.", tone: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -116,7 +156,9 @@ const AuthLoginForm = ({
               Forgot password?
             </Button>
           </div>
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Signing in…" : "Login"}
+          </Button>
           <Divider text="OR"></Divider>
           <Button variant="secondary" className="mt-2">
             Continue with Google{" "}

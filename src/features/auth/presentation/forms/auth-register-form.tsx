@@ -8,14 +8,16 @@ import FieldError from "@/shared/components/ui/field-error";
 import Input from "@/shared/components/ui/input";
 import Label from "@/shared/components/ui/label";
 import PasswordInput from "@/shared/components/ui/password-input";
+import { useToasts } from "@/shared/components/ui/toast";
 import { getFieldErrorId } from "@/shared/utils/form-ids";
 import AuthBackButton from "../components/auth-back-button";
+import { registerAction } from "../actions/auth-actions";
 
 import { RegisterSchema } from "../../domain/schemas/register.schema";
 
 interface AuthRegisterFormProps {
   onBackToLogin: () => void;
-  goToOtp: () => void;
+  goToOtp: (email: string) => void;
 }
 
 interface RegisterFieldErrors {
@@ -32,6 +34,8 @@ const AuthRegisterForm = ({
   goToOtp,
 }: AuthRegisterFormProps) => {
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToasts();
 
   const clearFieldError = (field: keyof RegisterFieldErrors) => {
     setFieldErrors((previous) =>
@@ -39,18 +43,22 @@ const AuthRegisterForm = ({
     );
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) {
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
-    const result = RegisterSchema.safeParse({
+    const payload = {
       name: formData.get("name"),
       organization: formData.get("organization"),
       email: formData.get("email"),
       password: formData.get("password"),
       confirmPassword: formData.get("confirmPassword"),
       terms: formData.get("terms") === "on",
-    });
+    };
+    const result = RegisterSchema.safeParse(payload);
 
     if (!result.success) {
       const flatErrors = result.error.flatten().fieldErrors;
@@ -66,7 +74,31 @@ const AuthRegisterForm = ({
     }
 
     setFieldErrors({});
-    goToOtp();
+    setSubmitting(true);
+    try {
+      const response = await registerAction(payload);
+      if (response.success) {
+        toast({ title: "Verification code sent", description: "Check your inbox for the 6-digit code.", tone: "success" });
+        goToOtp(response.data.email);
+        return;
+      }
+      if (response.fieldErrors) {
+        setFieldErrors({
+          name: response.fieldErrors.name,
+          organization: response.fieldErrors.organization,
+          email: response.fieldErrors.email,
+          password: response.fieldErrors.password,
+          confirmPassword: response.fieldErrors.confirmPassword,
+          terms: response.fieldErrors.terms,
+        });
+        return;
+      }
+      toast({ title: response.error.message, tone: "error" });
+    } catch {
+      toast({ title: "Something went wrong. Please try again.", tone: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -212,8 +244,8 @@ const AuthRegisterForm = ({
                 message={fieldErrors.terms}
               />
             </div>
-            <Button type="submit" className="mt-4">
-              Register
+            <Button type="submit" className="mt-4" disabled={submitting}>
+              {submitting ? "Creating account…" : "Register"}
             </Button>
           </form>
         </Card>
