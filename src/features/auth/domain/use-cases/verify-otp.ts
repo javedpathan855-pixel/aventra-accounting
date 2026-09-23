@@ -13,7 +13,7 @@ import { authEmailField } from "../schemas/auth-email";
 import { OtpSchema } from "../schemas/otp.schema";
 import { normalizeEmail } from "../services/auth-helpers";
 import { AUTH_LIMITS } from "../services/auth-limits";
-import { parseOrThrow } from "../services/validation";
+import { parseOrThrow } from "@/shared/errors/validation";
 import { ensureOwnerOrganization } from "./ensure-owner-organization";
 import type { AuthProvider, SecurityEventSink } from "../repositories/auth-provider";
 import type { OrganizationRepository } from "../repositories/organization-repository";

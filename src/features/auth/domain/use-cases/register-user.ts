@@ -11,7 +11,7 @@ import { AppError } from "@/shared/errors/app-error";
 
 import { normalizeEmail } from "../services/auth-helpers";
 import { AUTH_LIMITS } from "../services/auth-limits";
-import { parseOrThrow } from "../services/validation";
+import { parseOrThrow } from "@/shared/errors/validation";
 import { RegisterSchema } from "../schemas/register.schema";
 import { ensureOwnerOrganization } from "./ensure-owner-organization";
 import type { AuthProvider, NotificationPort, SecurityEventSink } from "../repositories/auth-provider";

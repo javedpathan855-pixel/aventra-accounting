@@ -122,8 +122,8 @@ const DASHBOARD_NAV_SECTIONS: DashboardNavSection[] = [
         id: "organization",
         label: "Organization",
         icon: Building,
-        status: "coming-soon",
-        notice: "Organization settings are coming soon.",
+        status: "available",
+        href: "/dashboard/organization",
       },
       {
         id: "settings",
